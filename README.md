@@ -24,9 +24,7 @@ burp_test_website/
 ## Team
 
 **Created by:**
-- Aishi De (23070521008)
-- Parthiv Abhani (23070521106)
-- Shlok Vij (23070521143)
+- Aishi De
 
 ---
 
