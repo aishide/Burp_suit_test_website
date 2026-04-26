@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burp Suite - Login</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Matrix canvas - live background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Dark overlay to make login card more readable */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Login card container */
+        .login-container {
+            background: rgba(10, 20, 10, 0.95);
+            border: 2px solid #00ff00;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3), inset 0 0 30px rgba(0, 255, 0, 0.05);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header section */
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header h1 {
+            color: #00ff00;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .login-header p {
+            color: #00cc00;
+            font-size: 14px;
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #00ff00;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #00aa00;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            background: rgba(0, 20, 0, 0.8);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group input:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 0 3px rgba(0, 255, 0, 0.3);
+        }
+
+        .form-group input::placeholder {
+            color: #006600;
+        }
+
+        /* Login button */
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00aa00 0%, #00ff00 100%);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Message display */
+        .message {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        /* Footer info */
+        .demo-info {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(0, 20, 0, 0.5);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #00cc00;
+            border: 1px solid #006600;
+        }
+
+        .demo-info strong {
+            color: #00ff00;
+        }
+
+        .demo-info code {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+        }
+
+        /* Team credits */
+        .team-credits {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(0, 20, 0, 0.3);
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #004400;
+        }
+
+        .team-credits h3 {
+            color: #00ff00;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .team-credits p {
+            color: #00cc00;
+            font-size: 12px;
+            margin: 4px 0;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix rain canvas - live animated background -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="login-container">
+        <div class="login-header">
+            <h1>BURP SUITE</h1>
+            <p>Penetration Testing Portal</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Enter your username"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                Sign In
+            </button>
+        </form>
+
+        <div class="message" id="message"></div>
+
+        <div class="demo-info">
+            <strong>Demo Credentials:</strong><br>
+            Username: <code>admin</code> | Password: <code>admin123</code><br><br>
+            <strong>SQL Injection Test:</strong><br>
+            Username: <code>admin' --</code> | Password: <code>anything</code>
+        </div>
+
+        <div class="team-credits">
+            <h3>Made By</h3>
+            <p>Aishi De (23070521008)</p>
+            <p>Parthiv Abhani (23070521106)</p>
+            <p>Shlok Vij (23070521143)</p>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const loginForm = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+        const loginBtn = document.getElementById('loginBtn');
+
+        // Handle form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Disable button during request
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+
+            try {
+                // Send login request to backend
+                const response = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                // Parse response
+                const data = await response.json();
+
+                // Display result message and handle redirect
+                messageDiv.className = 'message';
+                if (data.success) {
+                    messageDiv.classList.add('success');
+                    messageDiv.textContent = '✓ Login Successful... Redirecting';
+                    
+                    // Redirect to Canva presentation after 1.5 seconds
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 1500);
+                } else {
+                    messageDiv.classList.add('error');
+                    messageDiv.textContent = '✗ ' + data.message;
+                }
+
+            } catch (error) {
+                // Handle network errors
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '✗ Connection error. Is the server running?';
+                console.error('Login error:', error);
+            } finally {
+                // Re-enable button
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+
+    <!-- Matrix Rain Animation Script -->
+    <script>
+        // Matrix rain effect - live animated background
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Matrix characters - mix of tech symbols
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*(){}[]|;:<>?~`';
+        const charArray = chars.split('');
+
+        // Font settings
+        const fontSize = 14;
+        
+        // Variables for drops
+        let columns;
+        let drops = [];
+
+        // Function to initialize canvas size and drops array
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            columns = canvas.width / fontSize;
+            drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * canvas.height / fontSize; // Random starting positions
+            }
+        }
+
+        // Initialize on load
+        initCanvas();
+
+        // Draw the matrix rain
+        function drawMatrix() {
+            // Semi-transparent black to create trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Green text
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px Courier New';
+
+            // Loop through drops
+            for (let i = 0; i < drops.length; i++) {
+                // Get random character
+                const char = charArray[Math.floor(Math.random() * charArray.length)];
+                
+                // Draw the character
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+                // Reset drop to top randomly after it goes off screen
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                // Move drop down
+                drops[i]++;
+            }
+        }
+
+        // Run the animation
+        setInterval(drawMatrix, 33);
+
+        // Handle window resize - reinitialize canvas
+        window.addEventListener('resize', () => {
+            initCanvas();
+        });
+    </script>
+</body>
+</html>
